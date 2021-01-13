@@ -11,7 +11,9 @@ def generate_error_pair(fname):
     error_pair = defaultdict(list) 
     for i in range(len(errors) // 2):
         index = i * 2
-        line_num = errors[index].split(" ")[0][len(fname)+1:]
+        # line number 
+        line_num = int(errors[index].split(" ")[0][len(fname)+1:])
+        # error code 
         error_pair[line_num].append(errors[index+1][:4])
     return error_pair
 
@@ -19,11 +21,3 @@ error_pair = generate_error_pair("schedule.py")
 print(error_pair)
 
 
-# f = open("random_file.py", "r")
-# contents = f.readlines() 
-# f.close()
-
-# contents.insert(0, "HI\n")
-# f = open("random_file.py", "w")
-# f.writelines(contents)
-# f.close()
