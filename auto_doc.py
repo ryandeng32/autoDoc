@@ -20,6 +20,10 @@ class AutoDoc:
             error_pairs[errors[index+1][:4]].append(line_num)
         return error_pairs
     
+    # D200: One-line docstring should fit on one line with quotes
+    def fix_D200(self): 
+        pass
+    
     # D403: First word of the first line should be properly capitalized
     def fix_D403(self): 
         error_lines_num = self.error_pairs["D403"]
