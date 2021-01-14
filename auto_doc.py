@@ -1,5 +1,6 @@
 import subprocess 
 from collections import defaultdict
+from auto_helper import contain_alpha, print_errors
 
 class AutoDoc: 
     def __init__(self, fname): 
@@ -21,21 +22,42 @@ class AutoDoc:
         return error_pairs
     
     # D200: One-line docstring should fit on one line with quotes
+    # note: triple quotes must be used for this error to happen
+    # @TODO optimize function by using less FileIO 
     def fix_D200(self): 
-        pass
-    
+        f = open(self.fname, "r") 
+        contents = f.readlines() 
+        f.close() 
+        error_lines_num = self.error_pairs["D200"] 
+        # make one-line docstring fit on one line
+        def make_single_line(contents, line_index): 
+            start, end = line_index, line_index + 1
+            # fine the end of docstring 
+            while '"""' not in contents[end]: 
+                end += 1 
+            # format the docstring into one line
+            raw_docstring = "".join(contents[start: end+1])
+            content_start = raw_docstring.index('"""')
+            processed_docstring = raw_docstring[:content_start] + '"""' + raw_docstring.strip()[3:-3].strip() + '"""\n'
+            # remove original docstring and insert new docstring
+            for i in range(end - start + 1): 
+                contents.pop(start)
+            contents.insert(start, processed_docstring)
+            for i in range(len(error_lines_num)): 
+                error_lines_num[i] -= end - start
+        # apply fix for every D200 violation in self.fname
+        for i in range(len(error_lines_num)): 
+            make_single_line(contents, error_lines_num[i] - 1) 
+        f = open(self.fname, "w")    
+        f.writelines(contents)
+        f.close()
+
     # D403: First word of the first line should be properly capitalized
     def fix_D403(self): 
         error_lines_num = self.error_pairs["D403"]
         f = open(self.fname, "r")
         contents = f.readlines() 
         f.close()
-        # return whether a line contains any alpha letter 
-        def contain_alpha(line): 
-            for c in line: 
-                if c.isalpha(): 
-                    return True 
-            return False 
         # capitalize the docstring starting at contents[line_index] 
         def capitalize_first_alpha(contents, line_index):
             while not(contain_alpha(contents[line_index])): 
@@ -56,9 +78,14 @@ class AutoDoc:
         f.writelines(contents)
         f.close()
 
-def main(): 
+if __name__ == "__main__":
     obj = AutoDoc("random_file.py") 
-    print(obj.error_pairs)
-    obj.fix_D403()
+    output = [] 
+    print_errors(obj.error_pairs, "=====BEFORE=====")
 
-main()
+    obj.fix_D403()
+    obj.fix_D200() 
+
+
+    obj.error_pairs = obj.generate_error_pairs()
+    print_errors(obj.error_pairs, "=====AFTER=====")
