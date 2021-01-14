@@ -16,6 +16,8 @@ def print_errors(error_pairs, msg=None):
         print(i)
     
 def extract_docstring(contents, line_index): 
+    if contents[line_index].count('"""') == 2: 
+        return (line_index, line_index, contents[line_index])
     start, end = line_index, line_index + 1
     # find the end of docstring 
     while '"""' not in contents[end]: 

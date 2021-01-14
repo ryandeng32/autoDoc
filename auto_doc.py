@@ -22,7 +22,7 @@ class AutoDoc:
         return error_pairs
     
     # D200: One-line docstring should fit on one line with quotes
-    # note: triple quotes must be used for this error to happen
+    # change line numbers 
     def fix_D200(self): 
         f = open(self.fname, "r") 
         contents = f.readlines() 
@@ -31,7 +31,7 @@ class AutoDoc:
         # make one-line docstring fit on one line
         def make_single_line(contents, line_index): 
             start, end, raw_docstring = extract_docstring(contents, line_index) 
-            content_start = raw_docstring.index('"""')
+            content_start = raw_docstring.find('"""')
             processed_docstring = raw_docstring[:content_start] + '"""' + raw_docstring.strip()[3:-3].strip() + '"""\n'
             # remove original docstring and insert new docstring
             for i in range(end - start + 1): 
@@ -47,10 +47,26 @@ class AutoDoc:
         f.close()
 
     # No whitespaces allowed surrounding docstring text
+    # does NOT change line numbers 
     def fix_D210(self): 
-        pass 
+        f = open(self.fname, "r") 
+        contents = f.readlines() 
+        f.close() 
+        error_lines_num = self.generate_error_pairs()["D210"] 
+        # strip the whitespaces in docstring's first line
+        def strip_whitespaces(contents, line_index):
+            raw_line = contents[line_index] 
+            content_start = raw_line.find('"""')
+            processed_line = raw_line[:content_start] + '"""' + raw_line.strip()[3:].strip() + "\n"
+            contents[line_index] = processed_line
+        for line_num in error_lines_num:
+            strip_whitespaces(contents, line_num-1)
+        f = open(self.fname, "w")    
+        f.writelines(contents)
+        f.close()
 
     # D403: First word of the first line should be properly capitalized
+    # does NOT change line numbers 
     def fix_D403(self): 
         error_lines_num = self.generate_error_pairs()["D403"] 
         f = open(self.fname, "r")
@@ -77,14 +93,14 @@ class AutoDoc:
         f.close()
 
 if __name__ == "__main__":
-    obj = AutoDoc("random_file.py") 
+    obj = AutoDoc("./fold/test.py") 
     output = [] 
     obj.error_pairs = obj.generate_error_pairs()
     print_errors(obj.error_pairs, "=====BEFORE=====")
 
     obj.fix_D403()
     obj.fix_D200() 
-
+    obj.fix_D210()
 
     obj.error_pairs = obj.generate_error_pairs()
     print_errors(obj.error_pairs, "=====AFTER=====")
