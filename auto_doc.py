@@ -41,7 +41,8 @@ class AutoDoc:
         f.writelines(contents)
         f.close()
 
-obj = AutoDoc("random_file.py") 
-print(obj.error_pairs)
-obj.fix_D403()
+def main(): 
+    obj = AutoDoc("random_file.py") 
+    print(obj.error_pairs)
+    #obj.fix_D403()
 
