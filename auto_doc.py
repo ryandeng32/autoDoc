@@ -1,11 +1,11 @@
 import subprocess 
 from collections import defaultdict
-from auto_helper import contain_alpha, print_errors
+from auto_helper import contain_alpha, print_errors, extract_docstring
 
 class AutoDoc: 
     def __init__(self, fname): 
         self.fname = fname
-        self.error_pairs = self.generate_error_pairs()
+        self.error_pairs = None
     
     def generate_error_pairs(self): 
         # run pydocstyle
@@ -23,20 +23,14 @@ class AutoDoc:
     
     # D200: One-line docstring should fit on one line with quotes
     # note: triple quotes must be used for this error to happen
-    # @TODO optimize function by using less FileIO 
     def fix_D200(self): 
         f = open(self.fname, "r") 
         contents = f.readlines() 
         f.close() 
-        error_lines_num = self.error_pairs["D200"] 
+        error_lines_num = self.generate_error_pairs()["D200"] 
         # make one-line docstring fit on one line
         def make_single_line(contents, line_index): 
-            start, end = line_index, line_index + 1
-            # fine the end of docstring 
-            while '"""' not in contents[end]: 
-                end += 1 
-            # format the docstring into one line
-            raw_docstring = "".join(contents[start: end+1])
+            start, end, raw_docstring = extract_docstring(contents, line_index) 
             content_start = raw_docstring.index('"""')
             processed_docstring = raw_docstring[:content_start] + '"""' + raw_docstring.strip()[3:-3].strip() + '"""\n'
             # remove original docstring and insert new docstring
@@ -52,9 +46,13 @@ class AutoDoc:
         f.writelines(contents)
         f.close()
 
+    # No whitespaces allowed surrounding docstring text
+    def fix_D210(self): 
+        pass 
+
     # D403: First word of the first line should be properly capitalized
     def fix_D403(self): 
-        error_lines_num = self.error_pairs["D403"]
+        error_lines_num = self.generate_error_pairs()["D403"] 
         f = open(self.fname, "r")
         contents = f.readlines() 
         f.close()
@@ -81,6 +79,7 @@ class AutoDoc:
 if __name__ == "__main__":
     obj = AutoDoc("random_file.py") 
     output = [] 
+    obj.error_pairs = obj.generate_error_pairs()
     print_errors(obj.error_pairs, "=====BEFORE=====")
 
     obj.fix_D403()
@@ -89,3 +88,4 @@ if __name__ == "__main__":
 
     obj.error_pairs = obj.generate_error_pairs()
     print_errors(obj.error_pairs, "=====AFTER=====")
+
