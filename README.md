@@ -11,3 +11,7 @@
 # TODOs
 * Create test cases for each fix 
 * Instead of doing fileIO for each fix_D(..) function, just do it once and pass down contents 
+
+# Implementation Choice
+* The current implementation requires the files to be modified to be written somewhat reasonably
+* For D400, a fix will be executed for IFF (a single-line docstring) OR (the second line that contains letters starts with a capital letter)
