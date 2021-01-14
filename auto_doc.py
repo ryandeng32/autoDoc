@@ -20,13 +20,27 @@ class AutoDoc:
             error_pairs[errors[index+1][:4]].append(line_num)
         return error_pairs
     
+    # D200: One-line docstring should fit on one line with quotes
+    def fix_D200(self): 
+        pass
+    
     # D403: First word of the first line should be properly capitalized
     def fix_D403(self): 
         error_lines_num = self.error_pairs["D403"]
         f = open(self.fname, "r")
         contents = f.readlines() 
         f.close()
-        def capitalize_first_alpha(line):
+        # return whether a line contains any alpha letter 
+        def contain_alpha(line): 
+            for c in line: 
+                if c.isalpha(): 
+                    return True 
+            return False 
+        # capitalize the docstring starting at contents[line_index] 
+        def capitalize_first_alpha(contents, line_index):
+            while not(contain_alpha(contents[line_index])): 
+                line_index += 1 
+            line = contents[line_index]
             result_line_list = [] 
             for i in range(len(line)): 
                 if line[i].isalpha(): 
@@ -34,9 +48,10 @@ class AutoDoc:
                     result_line_list.append(line[i].upper())
                     result_line_list.append(line[i+1:])
                     break 
-            return "".join(result_line_list)
+            contents[line_index] = "".join(result_line_list)
+        # apply fix for every D403 violation in self.fname
         for line_num in error_lines_num:
-            contents[line_num-1] = capitalize_first_alpha(contents[line_num-1])
+            capitalize_first_alpha(contents, line_num-1)
         f = open(self.fname, "w")    
         f.writelines(contents)
         f.close()
@@ -44,5 +59,6 @@ class AutoDoc:
 def main(): 
     obj = AutoDoc("random_file.py") 
     print(obj.error_pairs)
-    #obj.fix_D403()
+    obj.fix_D403()
 
+main()
