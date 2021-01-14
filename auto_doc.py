@@ -28,6 +28,7 @@ class AutoDoc:
         f = open(self.fname, "r") 
         contents = f.readlines() 
         f.close() 
+        error_lines_num = self.error_pairs["D200"] 
         # make one-line docstring fit on one line
         def make_single_line(contents, line_index): 
             start, end = line_index, line_index + 1
@@ -37,21 +38,20 @@ class AutoDoc:
             # format the docstring into one line
             raw_docstring = "".join(contents[start: end+1])
             content_start = raw_docstring.index('"""')
-            processed_docstring = raw_docstring[:content_start] + '"""' + raw_docstring.strip()[4:-3].strip() + '"""\n'
+            processed_docstring = raw_docstring[:content_start] + '"""' + raw_docstring.strip()[3:-3].strip() + '"""\n'
             # remove original docstring and insert new docstring
             for i in range(end - start + 1): 
                 contents.pop(start)
             contents.insert(start, processed_docstring)
-            f = open(self.fname, "w")    
-            f.writelines(contents)
-            f.close()
+            for i in range(len(error_lines_num)): 
+                error_lines_num[i] -= end - start
         # apply fix for every D200 violation in self.fname
-        error_lines_num = self.error_pairs["D200"] 
-        while error_lines_num: 
-            make_single_line(contents, error_lines_num[0]-1)
-            self.error_pairs = self.generate_error_pairs()
-            error_lines_num = self.error_pairs["D200"] 
- 
+        for i in range(len(error_lines_num)): 
+            make_single_line(contents, error_lines_num[i] - 1) 
+        f = open(self.fname, "w")    
+        f.writelines(contents)
+        f.close()
+
     # D403: First word of the first line should be properly capitalized
     def fix_D403(self): 
         error_lines_num = self.error_pairs["D403"]
