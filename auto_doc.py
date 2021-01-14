@@ -68,6 +68,7 @@ class AutoDoc:
     # First line should end with a period
     # does NOT change ine numbers
     # rely on calling: fix_D200
+    # @TODO fix and refactor code for case 2
     def fix_D400(self): 
         f = open(self.fname, "r") 
         contents = f.readlines() 
@@ -88,7 +89,7 @@ class AutoDoc:
                 first_line_num = line_index 
                 line_index += 1 
                 while not(contain_alpha(contents[line_index])): 
-                    line_index += 1      
+                    line_index += 1            
                 if contents[line_index].strip()[0].isupper(): 
                     contents[first_line_num] = contents[first_line_num][:-1] + ".\n"
         for line_num in error_lines_num:
