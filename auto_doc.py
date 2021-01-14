@@ -22,9 +22,36 @@ class AutoDoc:
         return error_pairs
     
     # D200: One-line docstring should fit on one line with quotes
+    # note: triple quotes must be used for this error to happen
+    # @TODO optimize function by using less FileIO 
     def fix_D200(self): 
-        pass 
-    
+        f = open(self.fname, "r") 
+        contents = f.readlines() 
+        f.close() 
+        # make one-line docstring fit on one line
+        def make_single_line(contents, line_index): 
+            start, end = line_index, line_index + 1
+            # fine the end of docstring 
+            while '"""' not in contents[end]: 
+                end += 1 
+            # format the docstring into one line
+            raw_docstring = "".join(contents[start: end+1])
+            content_start = raw_docstring.index('"""')
+            processed_docstring = raw_docstring[:content_start] + '"""' + raw_docstring.strip()[4:-3].strip() + '"""\n'
+            # remove original docstring and insert new docstring
+            for i in range(end - start + 1): 
+                contents.pop(start)
+            contents.insert(start, processed_docstring)
+            f = open(self.fname, "w")    
+            f.writelines(contents)
+            f.close()
+        # apply fix for every D200 violation in self.fname
+        error_lines_num = self.error_pairs["D200"] 
+        while error_lines_num: 
+            make_single_line(contents, error_lines_num[0]-1)
+            self.error_pairs = self.generate_error_pairs()
+            error_lines_num = self.error_pairs["D200"] 
+ 
     # D403: First word of the first line should be properly capitalized
     def fix_D403(self): 
         error_lines_num = self.error_pairs["D403"]
@@ -55,7 +82,10 @@ if __name__ == "__main__":
     obj = AutoDoc("random_file.py") 
     output = [] 
     print_errors(obj.error_pairs, "=====BEFORE=====")
+
     obj.fix_D403()
-    # obj.fix_D200() 
+    obj.fix_D200() 
+
+
     obj.error_pairs = obj.generate_error_pairs()
     print_errors(obj.error_pairs, "=====AFTER=====")
