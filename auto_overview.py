@@ -2,6 +2,7 @@ import os
 import sys
 from auto_doc import AutoDoc
 from collections import defaultdict 
+from auto_helper import print_errors
 
 path = os.getcwd()
 if len(sys.argv) == 2: 
@@ -20,9 +21,4 @@ for fname in files:
     for i in obj.error_pairs: 
         overview_dict[i] += len(obj.error_pairs[i])
 
-output = [] 
-for error in overview_dict: 
-    output.append(f"{error}: {overview_dict[error]}")
-output.sort()
-for i in output:
-    print(i)
+print_errors(overview_dict)

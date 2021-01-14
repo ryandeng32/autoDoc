@@ -1,5 +1,6 @@
 import subprocess 
 from collections import defaultdict
+from auto_helper import contain_alpha, print_errors
 
 class AutoDoc: 
     def __init__(self, fname): 
@@ -22,7 +23,7 @@ class AutoDoc:
     
     # D200: One-line docstring should fit on one line with quotes
     def fix_D200(self): 
-        pass
+        pass 
     
     # D403: First word of the first line should be properly capitalized
     def fix_D403(self): 
@@ -30,12 +31,6 @@ class AutoDoc:
         f = open(self.fname, "r")
         contents = f.readlines() 
         f.close()
-        # return whether a line contains any alpha letter 
-        def contain_alpha(line): 
-            for c in line: 
-                if c.isalpha(): 
-                    return True 
-            return False 
         # capitalize the docstring starting at contents[line_index] 
         def capitalize_first_alpha(contents, line_index):
             while not(contain_alpha(contents[line_index])): 
@@ -56,9 +51,11 @@ class AutoDoc:
         f.writelines(contents)
         f.close()
 
-def main(): 
+if __name__ == "__main__":
     obj = AutoDoc("random_file.py") 
-    print(obj.error_pairs)
+    output = [] 
+    print_errors(obj.error_pairs, "=====BEFORE=====")
     obj.fix_D403()
-
-main()
+    # obj.fix_D200() 
+    obj.error_pairs = obj.generate_error_pairs()
+    print_errors(obj.error_pairs, "=====AFTER=====")
