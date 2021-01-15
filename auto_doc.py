@@ -1,29 +1,48 @@
+"""Automatically fixes PEP 257 violations for documentations."""
+
 import subprocess 
 from collections import defaultdict
+
 from auto_helper import contain_alpha, print_errors, extract_docstring
 
-class AutoDoc: 
-    def __init__(self, fname): 
+
+class AutoDoc (object): 
+    """A class that generates and fixes PEP 257 violations for a python file."""
+
+    def __init__ (self, fname): 
+        """Initialize file name.
+
+        :param fname: The file to be processed
+        """
         self.fname = fname
         self.error_pairs = None
     
-    def generate_error_pairs(self): 
-        # run pydocstyle
-        process = subprocess.run(['pydocstyle', self.fname], stdout=subprocess.PIPE)
+    def generate_error_pairs (self): 
+        """Generate error pairs for file.
+        
+        :return: A dict from the error code to a list of line numbers that have that error
+        :rtype: dict 
+        """
+        # run pydocstyle 
+        process = subprocess.run (['pydocstyle', self.fname], stdout=subprocess.PIPE)
         process
-        errors = [error.strip() for error in process.stdout.decode("utf-8").split("\n")]
-        error_pairs = defaultdict(list) 
-        for i in range(len(errors) // 2):
+        errors = [error.strip () for error in process.stdout.decode ("utf-8").split ("\n")]
+        error_pairs = defaultdict (list) 
+        for i in range (len (errors) // 2):
             index = i * 2
             # line number 
-            line_num = int(errors[index].split(" ")[0][len(self.fname)+1:])
+            line_num = int (errors[index].split (" ")[0][len (self.fname)+1:])
             # error code 
-            error_pairs[errors[index+1][:4]].append(line_num)
+            error_pairs[errors[index+1][:4]].append (line_num)
         return error_pairs
     
-    # D200: One-line docstring should fit on one line with quotes
-    # change line numbers 
-    def fix_D200(self): 
+    ## Fixes single triple quotes!!!!!!!
+
+    def fix_D200 (self):
+        """Fixes D200: One-line docstring should fit on one line with quotes.
+        
+        This operation will change the content and the line numbers in file. 
+        """ 
         f = open(self.fname, "r") 
         contents = f.readlines() 
         f.close() 
