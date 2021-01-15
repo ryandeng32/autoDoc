@@ -1,13 +1,16 @@
 """Automatically fixes PEP 257 violations for documentations."""
 
-import subprocess 
+import subprocess
 from collections import defaultdict
 
-from auto_helper import contain_alpha, print_errors, extract_docstring
+from auto_helper import contain_alpha, print_errors, extract_docstring, adjust_line_num
 
 
 class AutoDoc (object): 
-    """A class that generates and fixes PEP 257 violations for a python file."""
+    """A class that generates and fixes PEP 257 violations for a python file.
+    
+    Note: functions that modifies the line numbers need to call adjust_line_num with a change log
+    """
 
     def __init__ (self, fname): 
         """Initialize file name.
@@ -16,6 +19,7 @@ class AutoDoc (object):
         """
         self.fname = fname
         self.error_pairs = None
+        self.content = None
     
     def generate_error_pairs (self): 
         """Generate error pairs for file.
@@ -35,17 +39,17 @@ class AutoDoc (object):
             # error code 
             error_pairs[errors[index+1][:4]].append (line_num)
         return error_pairs
-    # REDUCE FILEIO !!!!!!!!!!!!!!
 
     def fix_D200 (self):
         """Fixes D200: One-line docstring should fit on one line with quotes.
         
         This operation will change the content and the line numbers in file. 
         """ 
-        f = open(self.fname, "r") 
-        contents = f.readlines() 
-        f.close() 
-        error_lines_num = self.generate_error_pairs()["D200"] 
+        contents = self.contents 
+        error_lines_num = self.error_pairs["D200"] 
+        if not error_lines_num:
+            return 
+        log = []
         # make one-line docstring fit on one line
         def make_single_line(contents, line_index): 
             start = line_index 
@@ -58,20 +62,22 @@ class AutoDoc (object):
             contents.insert(start, processed_docstring)
             for i in range(len(error_lines_num)): 
                 error_lines_num[i] -= end - start
+            log.append((start, end-start))
         # apply fix for every D200 violation in self.fname
         for i in range(len(error_lines_num)): 
             make_single_line(contents, error_lines_num[i] - 1) 
-        f = open(self.fname, "w")    
-        f.writelines(contents)
-        f.close()
+        adjust_line_num(contents, log, self.error_pairs)
+        self.contents = contents
+
+        
 
     # No whitespaces allowed surrounding docstring text
     # does NOT change line numbers 
     def fix_D210(self): 
-        f = open(self.fname, "r") 
-        contents = f.readlines() 
-        f.close() 
-        error_lines_num = self.generate_error_pairs()["D210"] 
+        contents = self.contents 
+        error_lines_num = self.error_pairs["D210"] 
+        if not error_lines_num:
+            return 
         # strip the whitespaces in docstring's first line
         def strip_whitespaces(contents, line_index):
             raw_line = contents[line_index] 
@@ -86,16 +92,14 @@ class AutoDoc (object):
             contents[line_index] = processed_line
         for line_num in error_lines_num:
             strip_whitespaces(contents, line_num-1)
-        f = open(self.fname, "w")    
-        f.writelines(contents)
-        f.close()
+        self.contents = contents 
 
     # # Use """triple double quotes"""
     def fix_D300 (self):
-        f = open (self.fname, "r")
-        contents = f.readlines () 
-        f.close ()         
-        error_lines_num = self.generate_error_pairs ()["D300"]
+        contents = self.contents 
+        error_lines_num = self.error_pairs["D300"]
+        if not error_lines_num:
+            return 
         def to_triple_double_quotes (contents, line_index): 
             start = line_index 
             end, quote_type, _ = extract_docstring(contents, line_index)
@@ -104,9 +108,7 @@ class AutoDoc (object):
                 contents[end] = contents[end].replace(quote_type, '"""') 
         for line_num in error_lines_num:
             to_triple_double_quotes (contents, line_num-1)
-        f = open (self.fname, "w")    
-        f.writelines (contents)
-        f.close () 
+        self.contents = contents 
         
 
     # First line should end with a period
@@ -115,10 +117,10 @@ class AutoDoc (object):
     
     # handle case for trailing spaces 
     def fix_D400(self): 
-        f = open(self.fname, "r") 
-        contents = f.readlines() 
-        f.close() 
-        error_lines_num = self.generate_error_pairs()["D400"] 
+        contents = self.contents 
+        error_lines_num = self.error_pairs["D400"] 
+        if not error_lines_num:
+            return 
         # add period for specific cases 
         def add_period(contents, line_index): 
             # case 1: one-line docstring
@@ -138,17 +140,15 @@ class AutoDoc (object):
                     contents[first_line_num] = contents[first_line_num][:-1] + ".\n"
         for line_num in error_lines_num:
             add_period(contents, line_num-1)
-        f = open(self.fname, "w")    
-        f.writelines(contents)
-        f.close() 
+        self.contents = contents 
 
     # D403: First word of the first line should be properly capitalized
     # does NOT change line numbers 
     def fix_D403(self): 
-        error_lines_num = self.generate_error_pairs()["D403"] 
-        f = open(self.fname, "r")
-        contents = f.readlines() 
-        f.close()
+        contents = self.contents 
+        error_lines_num = self.error_pairs["D403"] 
+        if not error_lines_num:
+            return 
         # capitalize the docstring starting at contents[line_index] 
         def capitalize_first_alpha(contents, line_index):
             while not(contain_alpha(contents[line_index])): 
@@ -165,22 +165,41 @@ class AutoDoc (object):
         # apply fix for every D403 violation in self.fname
         for line_num in error_lines_num:
             capitalize_first_alpha(contents, line_num-1)
-        f = open(self.fname, "w")    
-        f.writelines(contents)
-        f.close()
+        self.contents = contents 
+
+    def execute(self): 
+        f = open(self.fname, "r") 
+        self.contents = f.readlines() 
+        f.close() 
+
+        self.error_pairs = self.generate_error_pairs()
+        print_errors(self.error_pairs, "=====BEFORE=====")
+
+        self.fix_D300()
+        self.fix_D200()    
+        self.fix_D210()
+        self.fix_D403()
+        self.fix_D400() 
+
+        f = open(self.fname, "w")
+        f.writelines(self.contents) 
+        f.close() 
+        self.error_pairs = self.generate_error_pairs()
+        print_errors(self.error_pairs, "=====AFTER=====")    
 
 if __name__ == "__main__":
     obj = AutoDoc("./fold/random_file.py") 
-    output = [] 
-    obj.error_pairs = obj.generate_error_pairs()
-    print_errors(obj.error_pairs, "=====BEFORE=====")
+    obj.execute()
+    # output = [] 
+    # obj.error_pairs = obj.generate_error_pairs()
+    # print_errors(obj.error_pairs, "=====BEFORE=====")
     
-    obj.fix_D300()
-    obj.fix_D200() 
-    obj.fix_D210()
-    obj.fix_D403()
-    obj.fix_D400()
+    # obj.fix_D300()
+    # obj.fix_D200() 
+    # obj.fix_D210()
+    # obj.fix_D403()
+    # obj.fix_D400()
 
-    obj.error_pairs = obj.generate_error_pairs()
-    print_errors(obj.error_pairs, "=====AFTER=====")
+    # obj.error_pairs = obj.generate_error_pairs()
+    # print_errors(obj.error_pairs, "=====AFTER=====")
 

@@ -31,3 +31,18 @@ def extract_docstring(contents, line_index):
         end += 1 
     raw_docstring = "".join(contents[start: end+1])
     return (end, curr_type, raw_docstring)
+
+def adjust_line_num(contents, log, error_pairs): 
+    for error, list_line_nums in error_pairs.items():
+        for i in range(len(list_line_nums)):
+            num = list_line_nums[i] 
+            for log_pair in log: 
+                if num - 1 > log_pair[0]: 
+                    num -= log_pair[1] 
+                else: 
+                    break 
+            list_line_nums[i] = num 
+        error_pairs[error] = list_line_nums
+            
+        
+

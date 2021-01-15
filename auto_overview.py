@@ -25,9 +25,7 @@ for fname in files:
 print_errors(overview_dict)
 for fname in files: 
     obj = AutoDoc(fname)
-    obj.fix_D200() 
-    obj.fix_D210()
-    obj.fix_D400()
+    obj.execute()
 overview_dict = defaultdict(int) 
 
 for fname in files: 
