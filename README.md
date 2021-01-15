@@ -11,6 +11,9 @@
 # TODOs
 * Create test cases for each fix 
 * Instead of doing fileIO for each fix_D(..) function, just do it once and pass down contents 
+* fix and refactor code for case 2 in D400
+* make self.quote_type and check which type of quotation is used (''' or """, etc) 
+
 
 # Implementation Choice
 * The current implementation requires the files to be modified to be written somewhat reasonably
