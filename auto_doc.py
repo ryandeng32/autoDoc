@@ -65,6 +65,36 @@ class AutoDoc:
         f.writelines(contents)
         f.close()
 
+    # First line should end with a period
+    # does NOT change ine numbers
+    # best to be called after: fix_D200
+    def fix_D400(self): 
+        f = open(self.fname, "r") 
+        contents = f.readlines() 
+        f.close() 
+        error_lines_num = self.generate_error_pairs()["D400"] 
+        # add period for specific cases 
+        def add_period(contents, line_index): 
+            # case 1: one-line docstring
+            start, end, _ = extract_docstring(contents, line_index) 
+            line = contents[line_index] 
+            if end - start == 0: 
+                content_end = line.rfind('"""')
+                contents[line_index] = line[:content_end] + "." + line[content_end:]
+            else: 
+                # case 2: the second line that contains letters starts with a capital letter
+                while not(contain_alpha(contents[line_index])): 
+                    line_index += 1   
+                first_line_num = line_index
+                line_index += 1 
+                if line_index > end or contents[line_index].strip() == "" or contents[line_index].strip()[0].isupper(): 
+                    contents[first_line_num] = contents[first_line_num][:-1] + ".\n"
+        for line_num in error_lines_num:
+            add_period(contents, line_num-1)
+        f = open(self.fname, "w")    
+        f.writelines(contents)
+        f.close() 
+
     # D403: First word of the first line should be properly capitalized
     # does NOT change line numbers 
     def fix_D403(self): 
@@ -93,14 +123,15 @@ class AutoDoc:
         f.close()
 
 if __name__ == "__main__":
-    obj = AutoDoc("./fold/test.py") 
+    obj = AutoDoc("./fold/random_file.py") 
     output = [] 
     obj.error_pairs = obj.generate_error_pairs()
     print_errors(obj.error_pairs, "=====BEFORE=====")
-
-    obj.fix_D403()
+    
     obj.fix_D200() 
     obj.fix_D210()
+    obj.fix_D403()
+    obj.fix_D400()
 
     obj.error_pairs = obj.generate_error_pairs()
     print_errors(obj.error_pairs, "=====AFTER=====")
