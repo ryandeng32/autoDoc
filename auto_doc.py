@@ -35,8 +35,7 @@ class AutoDoc (object):
             # error code 
             error_pairs[errors[index+1][:4]].append (line_num)
         return error_pairs
-    
-    ## Fixes single triple quotes!!!!!!!
+    # REDUCE FILEIO !!!!!!!!!!!!!!
 
     def fix_D200 (self):
         """Fixes D200: One-line docstring should fit on one line with quotes.
@@ -49,7 +48,8 @@ class AutoDoc (object):
         error_lines_num = self.generate_error_pairs()["D200"] 
         # make one-line docstring fit on one line
         def make_single_line(contents, line_index): 
-            start, end, raw_docstring = extract_docstring(contents, line_index) 
+            start = line_index 
+            end, quote_type, raw_docstring = extract_docstring(contents, line_index) 
             content_start = raw_docstring.find('"""')
             processed_docstring = raw_docstring[:content_start] + '"""' + raw_docstring.strip()[3:-3].strip() + '"""\n'
             # remove original docstring and insert new docstring
@@ -75,8 +75,14 @@ class AutoDoc (object):
         # strip the whitespaces in docstring's first line
         def strip_whitespaces(contents, line_index):
             raw_line = contents[line_index] 
-            content_start = raw_line.find('"""')
-            processed_line = raw_line[:content_start] + '"""' + raw_line.strip()[3:].strip() + "\n"
+            start = line_index 
+            end, quote_type, _ = extract_docstring(contents, line_index)
+            content_start = raw_line.find(quote_type)
+            if end - start != 0: 
+                processed_line = raw_line[:content_start] + quote_type + raw_line.strip()[len(quote_type):].strip() + "\n"
+            else: 
+                content_end = raw_line.rfind(quote_type) 
+                processed_line = raw_line[:content_start] + quote_type + raw_line[content_start+len(quote_type):content_end].strip() + raw_line[content_end:]
             contents[line_index] = processed_line
         for line_num in error_lines_num:
             strip_whitespaces(contents, line_num-1)
@@ -84,9 +90,30 @@ class AutoDoc (object):
         f.writelines(contents)
         f.close()
 
+    # # Use """triple double quotes"""
+    def fix_D300 (self):
+        f = open (self.fname, "r")
+        contents = f.readlines () 
+        f.close ()         
+        error_lines_num = self.generate_error_pairs ()["D300"]
+        def to_triple_double_quotes (contents, line_index): 
+            start = line_index 
+            end, quote_type, _ = extract_docstring(contents, line_index)
+            contents[start] = contents[start].replace(quote_type, '"""') 
+            if end != start: 
+                contents[end] = contents[end].replace(quote_type, '"""') 
+        for line_num in error_lines_num:
+            to_triple_double_quotes (contents, line_num-1)
+        f = open (self.fname, "w")    
+        f.writelines (contents)
+        f.close () 
+        
+
     # First line should end with a period
     # does NOT change ine numbers
     # best to be called after: fix_D200
+    
+    # handle case for trailing spaces 
     def fix_D400(self): 
         f = open(self.fname, "r") 
         contents = f.readlines() 
@@ -95,7 +122,8 @@ class AutoDoc (object):
         # add period for specific cases 
         def add_period(contents, line_index): 
             # case 1: one-line docstring
-            start, end, _ = extract_docstring(contents, line_index) 
+            start = line_index 
+            end, _, _ = extract_docstring(contents, line_index) 
             line = contents[line_index] 
             if end - start == 0: 
                 content_end = line.rfind('"""')
@@ -147,6 +175,7 @@ if __name__ == "__main__":
     obj.error_pairs = obj.generate_error_pairs()
     print_errors(obj.error_pairs, "=====BEFORE=====")
     
+    obj.fix_D300()
     obj.fix_D200() 
     obj.fix_D210()
     obj.fix_D403()
