@@ -190,16 +190,3 @@ class AutoDoc (object):
 if __name__ == "__main__":
     obj = AutoDoc("./fold/random_file.py") 
     obj.execute()
-    # output = [] 
-    # obj.error_pairs = obj.generate_error_pairs()
-    # print_errors(obj.error_pairs, "=====BEFORE=====")
-    
-    # obj.fix_D300()
-    # obj.fix_D200() 
-    # obj.fix_D210()
-    # obj.fix_D403()
-    # obj.fix_D400()
-
-    # obj.error_pairs = obj.generate_error_pairs()
-    # print_errors(obj.error_pairs, "=====AFTER=====")
-
