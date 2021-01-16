@@ -169,31 +169,44 @@ class AutoDoc (object):
             capitalize_first_alpha(contents, line_num-1)
         self.contents = contents 
 
-    def execute(self): 
-        f = open(self.fname, "r") 
-        self.contents = f.readlines() 
-        f.close() 
+    def execute (self, debug=False): 
+        """Read from and apply fixes to file.
 
-        self.error_pairs = self.generate_error_pairs()
-        print_errors(self.error_pairs, "=====BEFORE=====")
+        :param debug: Print useful info when debug is True
 
-        self.fix_D300()
-        self.fix_D200()    
-        self.fix_D210()
-        self.fix_D403()
-        self.fix_D400() 
+        Debug mode features: 
+        - Print the violations before and after fixes 
+        - Print out the runtime for execution
+        """ 
+        f = open (self.fname, "r") 
+        self.contents = f.readlines () 
+        f.close () 
+        
+        self.error_pairs = self.generate_error_pairs ()
 
-        f = open(self.fname, "w")
-        f.writelines(self.contents) 
-        f.close() 
-        self.error_pairs = self.generate_error_pairs()
-        print_errors(self.error_pairs, "=====AFTER=====")    
+        if debug: 
+            print_errors (self.error_pairs, "BEFORE")
+
+        # apply fixes  
+        self.fix_D300 ()
+        self.fix_D200 ()    
+        self.fix_D210 ()
+        self.fix_D403 ()
+        self.fix_D400 () 
+
+        f = open (self.fname, "w")
+        f.writelines (self.contents) 
+        f.close () 
+
+        if debug: 
+            self.error_pairs = self.generate_error_pairs ()
+            print_errors (self.error_pairs, "AFTER") 
 
 
 # for testing autoDoc with a file specified through command line arguments  
 if __name__ == "__main__":
     if len (sys.argv) == 2 and os.path.isfile (sys.argv[-1]): 
         obj = AutoDoc (sys.argv[-1]) 
-        obj.execute () 
+        obj.execute (True) 
     else: 
         print ("ERROR: A valid file name is required.")

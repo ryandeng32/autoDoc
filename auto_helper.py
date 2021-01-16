@@ -5,15 +5,18 @@ def contain_alpha(line):
             return True 
     return False 
 
-def print_errors(error_pairs, msg=None): 
+def print_errors (error_pairs, msg=None): 
+    """Print error pairs from auto_doc with an optional message to display."""
     if msg: 
-        print(msg) 
+        print (f"-----{msg}-----") 
+
     output = [] 
     for error in error_pairs: 
-        output.append(f"{error}: {error_pairs[error]}")
-    output.sort()
+        output.append (f"{error}: {error_pairs[error]}")
+
+    output.sort ()
     for i in output:
-        print(i)
+        print (i)
     
 def extract_docstring(contents, line_index): 
     quote_types = ['"""', "'''", '"', "'"] 
