@@ -17,6 +17,7 @@ def print_errors (error_pairs, msg=None):
     output.sort ()
     for i in output:
         print (i)
+    print("")
     
 def extract_docstring(contents, line_index): 
     quote_types = ['"""', "'''", '"', "'"] 

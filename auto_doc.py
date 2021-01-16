@@ -2,6 +2,7 @@
 
 import os
 import sys 
+import time 
 import subprocess
 from collections import defaultdict
 
@@ -178,21 +179,28 @@ class AutoDoc (object):
         - Print the violations before and after fixes 
         - Print out the runtime for execution
         """ 
+        if debug: 
+            pydocstyle_start = time.time ()
+        self.error_pairs = self.generate_error_pairs ()
+        if debug:
+            pydocstyle_end = time.time () 
+
         f = open (self.fname, "r") 
         self.contents = f.readlines () 
         f.close () 
-        
-        self.error_pairs = self.generate_error_pairs ()
-
+    
         if debug: 
             print_errors (self.error_pairs, "BEFORE")
 
-        # apply fixes  
+        if debug: 
+            fix_start = time.time ()
         self.fix_D300 ()
         self.fix_D200 ()    
         self.fix_D210 ()
         self.fix_D403 ()
         self.fix_D400 () 
+        if debug: 
+            fix_end = time.time () 
 
         f = open (self.fname, "w")
         f.writelines (self.contents) 
@@ -201,6 +209,10 @@ class AutoDoc (object):
         if debug: 
             self.error_pairs = self.generate_error_pairs ()
             print_errors (self.error_pairs, "AFTER") 
+            print ("pydocstyle: %s seconds" % (pydocstyle_end - pydocstyle_start))
+            print ("Apply fixes: %s seconds" % (fix_end - fix_start))
+
+
 
 
 # for testing autoDoc with a file specified through command line arguments  
