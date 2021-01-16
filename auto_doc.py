@@ -1,5 +1,7 @@
 """Automatically fixes PEP 257 violations for documentations."""
 
+import os
+import sys 
 import subprocess
 from collections import defaultdict
 
@@ -19,7 +21,7 @@ class AutoDoc (object):
         """
         self.fname = fname
         self.error_pairs = None
-        self.content = None
+        self.contents = None
     
     def generate_error_pairs (self): 
         """Generate error pairs for file.
@@ -187,6 +189,11 @@ class AutoDoc (object):
         self.error_pairs = self.generate_error_pairs()
         print_errors(self.error_pairs, "=====AFTER=====")    
 
+
+# for testing autoDoc with a file specified through command line arguments  
 if __name__ == "__main__":
-    obj = AutoDoc("./fold/random_file.py") 
-    obj.execute()
+    if len (sys.argv) == 2 and os.path.isfile (sys.argv[-1]): 
+        obj = AutoDoc (sys.argv[-1]) 
+        obj.execute () 
+    else: 
+        print ("ERROR: A valid file name is required.")
