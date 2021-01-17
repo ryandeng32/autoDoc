@@ -7,7 +7,6 @@ import subprocess
 from collections import defaultdict
 
 from auto_helper import (
-    contain_alpha, 
     print_errors, 
     extract_docstring,
     adjust_line_num,
@@ -105,7 +104,7 @@ class AutoDoc (object):
             self.contents = contents 
 
     def fix_D300 (self):
-        """Fixes D300: Use triple double quotes for docstrings. 
+        """Fixes D300: Use triple double quotes for docstrings.
         
         This operation will NOT change the line numbers in file. 
         """ 
@@ -154,7 +153,7 @@ class AutoDoc (object):
                     next_line = contents[next_index].strip()
                     exceptions = ["True", "False"] 
                     if (next_index > end or next_line == "" or next_line == quote_type or 
-                        (next_line[0].isupper () and next_line.split ()[0] not in exceptions)): 
+                        (next_line[0].isupper () and next_line.split ()[0][:4] not in exceptions)): 
                         if first_alpha_index == end: 
                             content_end = line.rfind (quote_type)
                             content_start = first_non_whitespace_index (line) 
