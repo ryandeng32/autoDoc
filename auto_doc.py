@@ -53,31 +53,31 @@ class AutoDoc (object):
     def fix_D200 (self):
         """Fixes D200: One-line docstring should fit on one line with quotes.
         
-        This operation will change the content and the line numbers in file. 
+        This operation will change the line numbers in file. 
         """ 
         contents = self.contents 
         error_lines_num = self.error_pairs["D200"] 
-        if not error_lines_num:
-            return 
-        log = []
-        # make one-line docstring fit on one line
-        def make_single_line(contents, line_index): 
-            start = line_index 
-            end, quote_type, raw_docstring = extract_docstring(contents, line_index) 
-            content_start = raw_docstring.find('"""')
-            processed_docstring = raw_docstring[:content_start] + '"""' + raw_docstring.strip()[3:-3].strip() + '"""\n'
-            # remove original docstring and insert new docstring
-            for i in range(end - start + 1): 
-                contents.pop(start)
-            contents.insert(start, processed_docstring)
-            for i in range(len(error_lines_num)): 
-                error_lines_num[i] -= end - start
-            log.append((start, end-start))
-        # apply fix for every D200 violation in self.fname
-        for i in range(len(error_lines_num)): 
-            make_single_line(contents, error_lines_num[i] - 1) 
-        adjust_line_num(contents, log, self.error_pairs)
-        self.contents = contents
+
+        if error_lines_num: 
+            log = []
+            def make_single_line (contents, error_lines_num): 
+                line_index = error_lines_num[0] - 1
+                quote_type = get_quote_type (contents[line_index]) 
+                start, end, raw_docs = extract_docstring (contents, line_index) 
+                quote_len = len (quote_type) 
+                content_start = raw_docs.find (quote_type) + quote_len
+                content_end = raw_docs.rfind (quote_type) 
+                result_docs = (raw_docs[:content_start] + raw_docs.strip ()[quote_len:-quote_len].strip () + 
+                               raw_docs[content_end:]) 
+                # remove original docstring and insert new docstring
+                contents[start:end+1] = [result_docs]
+                log.append ((start, end - start)) 
+                error_lines_num.pop (0)
+                return [x - (end - start) for x in error_lines_num]
+            while error_lines_num: 
+                error_lines_num = make_single_line (contents, error_lines_num) 
+            adjust_line_num (contents, self.error_pairs, log)
+            self.contents = contents
 
         
 
@@ -159,7 +159,6 @@ class AutoDoc (object):
         """ 
         contents = self.contents 
         error_lines_num = self.error_pairs["D403"] 
-
         if error_lines_num:
             def capitalize_first_word (contents, line_index):
                 first_alpha_index = get_first_alpha_index (contents, line_index)
@@ -170,9 +169,9 @@ class AutoDoc (object):
                         temp_list[0] = temp_list[0].title () 
                         break 
                 contents[first_alpha_index] = line[:i] + " ".join (temp_list)
+
             for line_num in error_lines_num:
                 capitalize_first_word (contents, line_num-1)
-
             self.contents = contents 
 
     def execute (self, debug=False): 
@@ -200,9 +199,9 @@ class AutoDoc (object):
         if debug: 
             fix_start = time.time ()
         # self.fix_D300 ()
-        # self.fix_D200 ()    
+        self.fix_D200 ()    
         # self.fix_D210 ()
-        self.fix_D403 ()
+        self.fix_D403 ()        # first word capitalization 
         # self.fix_D400 () 
         if debug: 
             fix_end = time.time () 
