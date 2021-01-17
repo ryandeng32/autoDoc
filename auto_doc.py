@@ -6,7 +6,14 @@ import time
 import subprocess
 from collections import defaultdict
 
-from auto_helper import contain_alpha, print_errors, extract_docstring, adjust_line_num
+from auto_helper import (
+    contain_alpha, 
+    print_errors, 
+    extract_docstring,
+    adjust_line_num,
+    get_quote_type, 
+    get_first_alpha_index
+)
 
 
 class AutoDoc (object): 
@@ -145,30 +152,28 @@ class AutoDoc (object):
             add_period(contents, line_num-1)
         self.contents = contents 
 
-    # D403: First word of the first line should be properly capitalized
-    # does NOT change line numbers 
-    def fix_D403(self): 
+    def fix_D403 (self): 
+        """Fixes D403: First word of the first line should be properly capitalized.
+        
+        This operation will change the content and NOT the line numbers in file. 
+        """ 
         contents = self.contents 
         error_lines_num = self.error_pairs["D403"] 
-        if not error_lines_num:
-            return 
-        # capitalize the docstring starting at contents[line_index] 
-        def capitalize_first_alpha(contents, line_index):
-            while not(contain_alpha(contents[line_index])): 
-                line_index += 1 
-            line = contents[line_index]
-            result_line_list = [] 
-            for i in range(len(line)): 
-                if line[i].isalpha(): 
-                    result_line_list.append(line[:i])
-                    result_line_list.append(line[i].upper())
-                    result_line_list.append(line[i+1:])
-                    break 
-            contents[line_index] = "".join(result_line_list)
-        # apply fix for every D403 violation in self.fname
-        for line_num in error_lines_num:
-            capitalize_first_alpha(contents, line_num-1)
-        self.contents = contents 
+
+        if error_lines_num:
+            def capitalize_first_word (contents, line_index):
+                first_alpha_index = get_first_alpha_index (contents, line_index)
+                line = contents[first_alpha_index]
+                for i in range (len (line)): 
+                    if line[i].isalpha (): 
+                        temp_list = line[i:].split (" ")
+                        temp_list[0] = temp_list[0].title () 
+                        break 
+                contents[first_alpha_index] = line[:i] + " ".join (temp_list)
+            for line_num in error_lines_num:
+                capitalize_first_word (contents, line_num-1)
+
+            self.contents = contents 
 
     def execute (self, debug=False): 
         """Read from and apply fixes to file.
@@ -194,11 +199,11 @@ class AutoDoc (object):
 
         if debug: 
             fix_start = time.time ()
-        self.fix_D300 ()
-        self.fix_D200 ()    
-        self.fix_D210 ()
+        # self.fix_D300 ()
+        # self.fix_D200 ()    
+        # self.fix_D210 ()
         self.fix_D403 ()
-        self.fix_D400 () 
+        # self.fix_D400 () 
         if debug: 
             fix_end = time.time () 
 
@@ -209,16 +214,14 @@ class AutoDoc (object):
         if debug: 
             self.error_pairs = self.generate_error_pairs ()
             print_errors (self.error_pairs, "AFTER") 
-            print ("pydocstyle: %s seconds" % (pydocstyle_end - pydocstyle_start))
-            print ("Apply fixes: %s seconds" % (fix_end - fix_start))
-
-
+            print (f"pydocstyle: {pydocstyle_end - pydocstyle_start} seconds")
+            print (f"Apply fixes: {fix_end - fix_start} seconds")
 
 
 # for testing autoDoc with a file specified through command line arguments  
 if __name__ == "__main__":
     if len (sys.argv) == 2 and os.path.isfile (sys.argv[-1]): 
         obj = AutoDoc (sys.argv[-1]) 
-        obj.execute (True) 
+        obj.execute (debug=True) 
     else: 
         print ("ERROR: A valid file name is required.")
