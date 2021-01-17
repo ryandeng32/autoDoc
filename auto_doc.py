@@ -12,7 +12,8 @@ from auto_helper import (
     extract_docstring,
     adjust_line_num,
     get_quote_type, 
-    get_first_alpha_index
+    get_first_alpha_index,
+    first_non_whitespace_index
 )
 
 
@@ -120,38 +121,51 @@ class AutoDoc (object):
             for line_num in error_lines_num:
                 to_triple_double_quotes (contents, line_num-1)
             self.contents = contents 
-        
 
-    # First line should end with a period
-    # does NOT change ine numbers
-    # best to be called after: fix_D200
-    
-    # handle case for trailing spaces 
-    def fix_D400(self): 
+    def fix_D400 (self): 
+        """Fixes D400: First line should end with a period.
+        
+        This operation will NOT change the line numbers in file. 
+        This function now only process two cases:
+        - One-line docstring
+        - The second line starts with a capital letter 
+        """ 
         contents = self.contents 
         error_lines_num = self.error_pairs["D400"] 
-        if not error_lines_num:
-            return 
-        # add period for specific cases 
-        def add_period(contents, line_index): 
-            # case 1: one-line docstring
-            start = line_index 
-            end, _, _ = extract_docstring(contents, line_index) 
-            line = contents[line_index] 
-            if end - start == 0: 
-                content_end = line.rfind('"""')
-                contents[line_index] = line[:content_end] + "." + line[content_end:]
-            else: 
-                # case 2: the second line that contains letters starts with a capital letter
-                while not(contain_alpha(contents[line_index])): 
-                    line_index += 1   
-                first_line_num = line_index
-                line_index += 1 
-                if line_index > end or contents[line_index].strip() == "" or contents[line_index].strip()[0].isupper(): 
-                    contents[first_line_num] = contents[first_line_num][:-1] + ".\n"
-        for line_num in error_lines_num:
-            add_period(contents, line_num-1)
-        self.contents = contents 
+        if error_lines_num:
+            def add_period (contents, line_index): 
+                start, end, _ = extract_docstring (contents, line_index) 
+                first_line = contents[start] 
+                quote_type = get_quote_type (first_line)
+                quote_len = len (quote_type) 
+                # case 1: one-line docstring
+                if end - start == 0: 
+                    content_start = first_line.find (quote_type) + quote_len
+                    content_end = first_line.rfind (quote_type)
+                    contents[start] = (first_line[:content_start] + first_line[content_start:content_end].strip () + 
+                                       "." + first_line[content_end:])
+                else: 
+                    # case 2: the second line starts with a capital letter
+                    first_alpha_index = get_first_alpha_index (contents, start)
+                    line = contents[first_alpha_index] 
+                    if line.rstrip ()[-1] == ".": 
+                        contents[first_alpha_index] = line.rstrip () + "\n"
+                    next_index = first_alpha_index + 1 
+                    next_line = contents[next_index].strip()
+                    exceptions = ["True", "False"] 
+                    if (next_index > end or next_line == "" or next_line == quote_type or 
+                        (next_line[0].isupper () and next_line.split ()[0] not in exceptions)): 
+                        if first_alpha_index == end: 
+                            content_end = line.rfind (quote_type)
+                            content_start = first_non_whitespace_index (line) 
+                            contents[first_alpha_index] = (line[:content_start] + 
+                                                           line[content_start: content_end].strip () + 
+                                                           "." + line[content_end:])
+                        else: 
+                            contents[first_alpha_index] = line[:-1] + ".\n"
+            for line_num in error_lines_num:
+                add_period (contents, line_num-1)
+            self.contents = contents 
 
     def fix_D403 (self): 
         """Fixes D403: First word of the first line should be properly capitalized.
@@ -199,11 +213,11 @@ class AutoDoc (object):
 
         if debug: 
             fix_start = time.time ()
+        self.fix_D200 ()        # one-line docstrings 
+        self.fix_D210 ()        # trim whitespaces 
         self.fix_D300 ()        # use triple double quotes 
-        # self.fix_D200 ()        # one-line docstrings 
-        # self.fix_D210 ()        # trim whitespaces 
-        # self.fix_D403 ()        # first word capitalization 
-        # self.fix_D400 () 
+        self.fix_D403 ()        # first word capitalization 
+        self.fix_D400 ()        # add period to first line
         if debug: 
             fix_end = time.time () 
 
