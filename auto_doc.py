@@ -103,21 +103,23 @@ class AutoDoc (object):
                 strip_whitespaces (contents, line_num-1)
             self.contents = contents 
 
-    # # Use """triple double quotes"""
     def fix_D300 (self):
+        """Fixes D300: Use triple double quotes for docstrings. 
+        
+        This operation will NOT change the line numbers in file. 
+        """ 
         contents = self.contents 
         error_lines_num = self.error_pairs["D300"]
-        if not error_lines_num:
-            return 
-        def to_triple_double_quotes (contents, line_index): 
-            start = line_index 
-            end, quote_type, _ = extract_docstring(contents, line_index)
-            contents[start] = contents[start].replace(quote_type, '"""') 
-            if end != start: 
-                contents[end] = contents[end].replace(quote_type, '"""') 
-        for line_num in error_lines_num:
-            to_triple_double_quotes (contents, line_num-1)
-        self.contents = contents 
+        if error_lines_num:
+            def to_triple_double_quotes (contents, line_index): 
+                start, end, _ = extract_docstring (contents, line_index)
+                quote_type = get_quote_type (contents[start]) 
+                contents[start] = contents[start].replace (quote_type, '"""') 
+                if end != start: 
+                    contents[end] = contents[end].replace (quote_type, '"""') 
+            for line_num in error_lines_num:
+                to_triple_double_quotes (contents, line_num-1)
+            self.contents = contents 
         
 
     # First line should end with a period
@@ -197,10 +199,10 @@ class AutoDoc (object):
 
         if debug: 
             fix_start = time.time ()
-        # self.fix_D300 ()
-        self.fix_D200 ()        # one-line docstrings 
-        self.fix_D210 ()        # trim whitespaces 
-        self.fix_D403 ()        # first word capitalization 
+        self.fix_D300 ()        # use triple double quotes 
+        # self.fix_D200 ()        # one-line docstrings 
+        # self.fix_D210 ()        # trim whitespaces 
+        # self.fix_D403 ()        # first word capitalization 
         # self.fix_D400 () 
         if debug: 
             fix_end = time.time () 
