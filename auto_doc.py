@@ -79,30 +79,29 @@ class AutoDoc (object):
             adjust_line_num (contents, self.error_pairs, log)
             self.contents = contents
 
+    def fix_D210 (self): 
+        """Fixes D210: No whitespaces allowed surrounding docstring text.
         
-
-    # No whitespaces allowed surrounding docstring text
-    # does NOT change line numbers 
-    def fix_D210(self): 
+        This operation will NOT change the line numbers in file. 
+        """ 
         contents = self.contents 
         error_lines_num = self.error_pairs["D210"] 
-        if not error_lines_num:
-            return 
-        # strip the whitespaces in docstring's first line
-        def strip_whitespaces(contents, line_index):
-            raw_line = contents[line_index] 
-            start = line_index 
-            end, quote_type, _ = extract_docstring(contents, line_index)
-            content_start = raw_line.find(quote_type)
-            if end - start != 0: 
-                processed_line = raw_line[:content_start] + quote_type + raw_line.strip()[len(quote_type):].strip() + "\n"
-            else: 
-                content_end = raw_line.rfind(quote_type) 
-                processed_line = raw_line[:content_start] + quote_type + raw_line[content_start+len(quote_type):content_end].strip() + raw_line[content_end:]
-            contents[line_index] = processed_line
-        for line_num in error_lines_num:
-            strip_whitespaces(contents, line_num-1)
-        self.contents = contents 
+        if error_lines_num:
+            def strip_whitespaces (contents, line_index):
+                start, end, _ = extract_docstring (contents, line_index) 
+                line = contents[start] 
+                quote_type = get_quote_type (line)
+                quote_len = len (quote_type) 
+                content_start = line.find (quote_type) + quote_len 
+                if end - start != 0: 
+                    result_line = line[:content_start] + line[content_start:].strip () + "\n"
+                else: 
+                    content_end = line.rfind (quote_type) 
+                    result_line = line[:content_start] + line[content_start:content_end].strip () + line[content_end:]
+                contents[line_index] = result_line
+            for line_num in error_lines_num:
+                strip_whitespaces (contents, line_num-1)
+            self.contents = contents 
 
     # # Use """triple double quotes"""
     def fix_D300 (self):
@@ -155,7 +154,7 @@ class AutoDoc (object):
     def fix_D403 (self): 
         """Fixes D403: First word of the first line should be properly capitalized.
         
-        This operation will change the content and NOT the line numbers in file. 
+        This operation will NOT change the line numbers in file. 
         """ 
         contents = self.contents 
         error_lines_num = self.error_pairs["D403"] 
@@ -199,8 +198,8 @@ class AutoDoc (object):
         if debug: 
             fix_start = time.time ()
         # self.fix_D300 ()
-        self.fix_D200 ()    
-        # self.fix_D210 ()
+        self.fix_D200 ()        # one-line docstrings 
+        self.fix_D210 ()        # trim whitespaces 
         self.fix_D403 ()        # first word capitalization 
         # self.fix_D400 () 
         if debug: 
