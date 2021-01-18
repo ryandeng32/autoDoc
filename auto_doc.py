@@ -12,7 +12,8 @@ from auto_helper import (
     adjust_line_num,
     get_quote_type, 
     get_first_alpha_index,
-    first_non_whitespace_index
+    first_non_whitespace_index,
+    manage_blank_lines
 )
 
 
@@ -92,15 +93,7 @@ class AutoDoc (object):
             def remove_blank_lines (contents, error_lines_num): 
                 line_index = error_lines_num[0] - 1
                 start, end, _ = extract_docstring (contents, line_index) 
-                blank_start, blank_end = end + 1, end + 1 
-                while contents[blank_end].strip () == "": 
-                    blank_end += 1 
-                # remove blank lines 
-                contents[blank_start:blank_end] = []
-                lines_removed = blank_end - blank_start
-                log.append ((blank_start, lines_removed)) 
-                error_lines_num.pop (0)
-                return [x - lines_removed for x in error_lines_num]
+                return manage_blank_lines(contents, end + 1, log, error_lines_num)
             while error_lines_num: 
                 error_lines_num = remove_blank_lines (contents, error_lines_num) 
             adjust_line_num (contents, self.error_pairs, log)
@@ -118,21 +111,8 @@ class AutoDoc (object):
             log = []
             def one_blank_line (contents, error_lines_num): 
                 line_index = error_lines_num[0] - 1
-                error_lines_num.pop (0)
                 start, end, _ = extract_docstring (contents, line_index) 
-                blank_start, blank_end = end + 1, end + 1 
-                while contents[blank_end].strip () == "": 
-                    blank_end += 1 
-                blank_end -= 1 
-                if blank_end < blank_start: 
-                    contents.insert (blank_start, "\n") 
-                    lines_removed = -1 
-                else: 
-                    # remove all but one blank line
-                    contents[blank_start:blank_end] = []
-                    lines_removed = blank_end - blank_start 
-                log.append ((blank_start, lines_removed)) 
-                return [x - lines_removed for x in error_lines_num]
+                return manage_blank_lines(contents, end + 1, log, error_lines_num, True)
             while error_lines_num: 
                 error_lines_num = one_blank_line (contents, error_lines_num) 
             adjust_line_num (contents, self.error_pairs, log)
@@ -184,9 +164,10 @@ class AutoDoc (object):
         """Fixes D400: First line should end with a period.
         
         This operation will NOT change the line numbers in file. 
-        This function now only process two cases:
+        This function now only process three cases:
         - One-line docstring
-        - The second line starts with a capital letter 
+        - First line that contains alpha characters ends with period 
+        - The next line starts with a capital letter that's not True or False         
         """ 
         contents = self.contents 
         error_lines_num = self.error_pairs["D400"] 
@@ -208,6 +189,7 @@ class AutoDoc (object):
                     line = contents[first_alpha_index] 
                     if line.rstrip ()[-1] == ".": 
                         contents[first_alpha_index] = line.rstrip () + "\n"
+                        return
                     next_index = first_alpha_index + 1 
                     next_line = contents[next_index].strip()
                     exceptions = ["True", "False"] 
