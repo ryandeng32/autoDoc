@@ -118,6 +118,7 @@ class AutoDoc (object):
             log = []
             def one_blank_line (contents, error_lines_num): 
                 line_index = error_lines_num[0] - 1
+                error_lines_num.pop (0)
                 start, end, _ = extract_docstring (contents, line_index) 
                 blank_start, blank_end = end + 1, end + 1 
                 while contents[blank_end].strip () == "": 
@@ -125,13 +126,12 @@ class AutoDoc (object):
                 blank_end -= 1 
                 if blank_end < blank_start: 
                     contents.insert (blank_start, "\n") 
-                    log.append ((blank_start, -1)) 
-                    return 
-                # remove all but one blank line
-                contents[blank_start:blank_end] = []
-                lines_removed = blank_end - blank_start 
+                    lines_removed = -1 
+                else: 
+                    # remove all but one blank line
+                    contents[blank_start:blank_end] = []
+                    lines_removed = blank_end - blank_start 
                 log.append ((blank_start, lines_removed)) 
-                error_lines_num.pop (0)
                 return [x - lines_removed for x in error_lines_num]
             while error_lines_num: 
                 error_lines_num = one_blank_line (contents, error_lines_num) 
