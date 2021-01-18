@@ -43,9 +43,6 @@ for fname in files:
         overview_dict[i] += len(obj.error_pairs[i])
     if "D400" in obj.error_pairs: 
         contents.append({fname: obj.error_pairs["D400"]})
-    f = open("errors.txt", "w")
-    f.writelines("contents")
-    f.close()
 print_errors(overview_dict)
 
 if debug:
