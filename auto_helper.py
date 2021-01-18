@@ -62,4 +62,19 @@ def adjust_line_num(contents, error_pairs, log):
         error_pairs[error] = list_line_nums
             
         
+def manage_blank_lines(contents, blank_start, log, error_lines_num, keep_one=False): 
+    blank_end = blank_start 
+    while contents[blank_end].strip() == "": 
+        blank_end += 1 
+    if keep_one: 
+        if blank_end == blank_start: 
+            contents.insert (blank_start, "\n") 
+        blank_end -= 1 
+
+    lines_removed = blank_end - blank_start
+    if lines_removed != -1: 
+        contents[blank_start:blank_end] = [] 
+    log.append ((blank_start, lines_removed)) 
+    error_lines_num.pop (0)
+    return [x - lines_removed for x in error_lines_num]
 
