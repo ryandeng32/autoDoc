@@ -23,13 +23,13 @@ class AutoDoc (object):
     Note: functions that modifies the line numbers need to call adjust_line_num with a change log
     """
 
-    def __init__ (self, fname): 
+    def __init__ (self, fname, error_pairs=None): 
         """Initialize file name.
 
         :param fname: The file to be processed
         """
         self.fname = fname
-        self.error_pairs = None
+        self.error_pairs = error_pairs
         self.contents = None
     
     def generate_error_pairs (self): 
@@ -293,7 +293,8 @@ class AutoDoc (object):
         """ 
         if debug: 
             pydocstyle_start = time.time ()
-        self.error_pairs = self.generate_error_pairs ()
+        if self.error_pairs is None: 
+            self.error_pairs = self.generate_error_pairs ()
         if debug:
             pydocstyle_end = time.time () 
 
