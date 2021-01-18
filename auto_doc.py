@@ -316,6 +316,9 @@ class AutoDoc (object):
 if __name__ == "__main__":
     if len (sys.argv) == 2 and os.path.isfile (sys.argv[-1]): 
         obj = AutoDoc (sys.argv[-1]) 
+        obj.execute () 
+    elif len(sys.argv) == 3 and sys.argv[2] == "-d":
+        obj = AutoDoc (sys.argv[1]) 
         obj.execute (debug=True) 
     else: 
         print ("ERROR: A valid file name is required.")

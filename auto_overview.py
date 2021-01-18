@@ -1,12 +1,19 @@
 import os
 import sys
+import time 
 from auto_doc import AutoDoc
 from collections import defaultdict 
 from auto_helper import print_errors
 
+debug = False
 path = os.getcwd()
 if len(sys.argv) == 2: 
     path = sys.argv[-1]
+elif len(sys.argv) == 3 and sys.argv[2] == "-d":
+    path = sys.argv[1]
+    debug = True 
+    total_time_start = time.time ()
+
 hidden = [".", "~"]
 ignored_files = ['auto_doc.py', 'auto_overview.py'] 
 all_files = [] 
@@ -36,7 +43,8 @@ for fname in files:
         overview_dict[i] += len(obj.error_pairs[i])
     if "D400" in obj.error_pairs: 
         contents.append({fname: obj.error_pairs["D400"]})
-    f = open("errors.txt", "w")
-    f.writelines("contents")
-    f.close()
 print_errors(overview_dict)
+
+if debug:
+    total_time_end = time.time () 
+    print ("Total time: ", total_time_end - total_time_start, "seconds")
