@@ -118,6 +118,43 @@ class AutoDoc (object):
             adjust_line_num (contents, self.error_pairs, log)
             self.contents = contents
 
+    def fix_D205 (self): 
+        """Fixes D205: 1 blank line required between summary line and description.
+
+        This operation will change the line numbers in file. 
+        This function now only process two cases:
+        - First line that contains alpha characters ends with period 
+        - The next line starts with a capital letter that's not True or False 
+        """ 
+        contents = self.contents 
+        error_lines_num = self.error_pairs["D205"] 
+        if error_lines_num:
+            log = [] 
+            def add_blank_line (contents, error_lines_num): 
+                canFix = False 
+                line_index = error_lines_num[0] - 1
+                start, end, _ = extract_docstring (contents, line_index) 
+                quote_type = get_quote_type (contents[start])
+                # case 1: first line ends with period 
+                first_alpha_index = get_first_alpha_index (contents, start)
+                line = contents[first_alpha_index] 
+                if line.rstrip ()[-1] == ".": 
+                    canFix = True 
+                # case: the next line starts with a capital letter that's not True or False 
+                next_index = first_alpha_index + 1 
+                next_line = contents[next_index].strip()
+                exceptions = ["True", "False"] 
+                if (next_index > end or next_line == "" or next_line == quote_type or 
+                    (next_line[0].isupper () and next_line.split ()[0][:4] not in exceptions)): 
+                    canFix = True 
+                if canFix: 
+                    return manage_blank_lines (contents, next_index, log, error_lines_num, True)
+                return error_lines_num[1:]
+            while error_lines_num: 
+                error_lines_num = add_blank_line (contents, error_lines_num) 
+            adjust_line_num (contents, self.error_pairs, log)
+            self.contents = contents
+
     def fix_D210 (self): 
         """Fixes D210: No whitespaces allowed surrounding docstring text.
         
@@ -256,6 +293,7 @@ class AutoDoc (object):
         self.fix_D200 ()        # one-line docstrings 
         self.fix_D202 ()        # remove blank lines after docs
         self.fix_D204 ()        # one blank lines after class docs
+        self.fix_D205 ()        # one blank line after summary
         self.fix_D210 ()        # trim whitespaces 
         self.fix_D300 ()        # use triple double quotes 
         self.fix_D403 ()        # first word capitalization 
