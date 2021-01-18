@@ -79,6 +79,65 @@ class AutoDoc (object):
             adjust_line_num (contents, self.error_pairs, log)
             self.contents = contents
 
+    def fix_D202 (self): 
+        """Fixes D202: No blank lines allowed after function docstring.
+        
+        This operation will change the line numbers in file. 
+        """ 
+        contents = self.contents 
+        error_lines_num = self.error_pairs["D202"] 
+
+        if error_lines_num: 
+            log = []
+            def remove_blank_lines (contents, error_lines_num): 
+                line_index = error_lines_num[0] - 1
+                start, end, _ = extract_docstring (contents, line_index) 
+                blank_start, blank_end = end + 1, end + 1 
+                while contents[blank_end].strip () == "": 
+                    blank_end += 1 
+                # remove blank lines 
+                contents[blank_start:blank_end] = []
+                lines_removed = blank_end - blank_start
+                log.append ((blank_start, lines_removed)) 
+                error_lines_num.pop (0)
+                return [x - lines_removed for x in error_lines_num]
+            while error_lines_num: 
+                error_lines_num = remove_blank_lines (contents, error_lines_num) 
+            adjust_line_num (contents, self.error_pairs, log)
+            self.contents = contents
+
+    def fix_D204 (self): 
+        """Fixes D204: 1 blank line required after class docstring.
+        
+        This operation will change the line numbers in file. 
+        """ 
+        contents = self.contents 
+        error_lines_num = self.error_pairs["D204"] 
+
+        if error_lines_num: 
+            log = []
+            def one_blank_line (contents, error_lines_num): 
+                line_index = error_lines_num[0] - 1
+                error_lines_num.pop (0)
+                start, end, _ = extract_docstring (contents, line_index) 
+                blank_start, blank_end = end + 1, end + 1 
+                while contents[blank_end].strip () == "": 
+                    blank_end += 1 
+                blank_end -= 1 
+                if blank_end < blank_start: 
+                    contents.insert (blank_start, "\n") 
+                    lines_removed = -1 
+                else: 
+                    # remove all but one blank line
+                    contents[blank_start:blank_end] = []
+                    lines_removed = blank_end - blank_start 
+                log.append ((blank_start, lines_removed)) 
+                return [x - lines_removed for x in error_lines_num]
+            while error_lines_num: 
+                error_lines_num = one_blank_line (contents, error_lines_num) 
+            adjust_line_num (contents, self.error_pairs, log)
+            self.contents = contents
+
     def fix_D210 (self): 
         """Fixes D210: No whitespaces allowed surrounding docstring text.
         
@@ -213,6 +272,8 @@ class AutoDoc (object):
         if debug: 
             fix_start = time.time ()
         self.fix_D200 ()        # one-line docstrings 
+        self.fix_D202 ()        # remove blank lines after docs
+        self.fix_D204 ()        # one blank lines after class docs
         self.fix_D210 ()        # trim whitespaces 
         self.fix_D300 ()        # use triple double quotes 
         self.fix_D403 ()        # first word capitalization 
