@@ -197,6 +197,22 @@ class AutoDoc (object):
                 to_triple_double_quotes (contents, line_num-1)
             self.contents = contents 
 
+    def fix_D301 (self):
+        """Fixes D301: Add r before triple double quotes if any backslashes in a docstring. 
+        
+        This operation will NOT change the line numbers in file. 
+        """ 
+        contents = self.contents 
+        error_lines_num = self.error_pairs["D301"]
+        if error_lines_num:
+            def make_raw_docs (contents, line_index): 
+                line = contents[line_index]
+                index = first_non_whitespace_index(line)
+                contents[line_index] = line[:index] + "r" + line[index:]
+            for line_num in error_lines_num:
+                make_raw_docs (contents, line_num-1)
+            self.contents = contents 
+
     def fix_D400 (self): 
         """Fixes D400: First line should end with a period.
         
@@ -296,6 +312,7 @@ class AutoDoc (object):
         self.fix_D205 ()        # one blank line after summary
         self.fix_D210 ()        # trim whitespaces 
         self.fix_D300 ()        # use triple double quotes 
+        self.fix_D301 ()        # use raw docs for backslashes
         self.fix_D403 ()        # first word capitalization 
         self.fix_D400 ()        # add period to first line
         if debug: 
