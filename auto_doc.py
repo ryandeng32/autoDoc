@@ -282,7 +282,30 @@ class AutoDoc (object):
                 capitalize_first_word (contents, line_num-1)
             self.contents = contents 
 
-    def execute (self, debug): 
+    def fix_D412 (self): 
+        contents = self.contents 
+        error_lines_num = self.error_pairs["D412"] 
+        if error_lines_num:
+            log = [] 
+            def fix_header (contents, error_lines_num):
+                line_index = error_lines_num[0] - 1 
+                quote_type = get_quote_type (contents[line_index])
+                while contents[line_index].strip () != "Parameters:": 
+                    line_index += 1 
+                line_index += 1
+                error_lines_num = manage_blank_lines (contents, line_index, log, error_lines_num) 
+                line = contents[line_index]
+                while line.strip () != "" and line.strip () != quote_type: 
+                    contents[line_index] = " " * 4 + line.replace (" --", ":")
+                    line_index += 1 
+                    line = contents[line_index] 
+                return error_lines_num
+            while error_lines_num: 
+                error_lines_num = fix_header (contents, error_lines_num) 
+            adjust_line_num (contents, self.error_pairs, log)
+            self.contents = contents
+
+    def execute (self, debug=False): 
         """Read from and apply fixes to file.
 
         :param debug: Print useful info when debug is True
@@ -314,8 +337,9 @@ class AutoDoc (object):
         self.fix_D210 ()        # trim whitespaces 
         self.fix_D300 ()        # use triple double quotes 
         self.fix_D301 ()        # use raw docs for backslashes
-        self.fix_D403 ()        # first word capitalization 
         self.fix_D400 ()        # add period to first line
+        self.fix_D403 ()        # first word capitalization 
+        self.fix_D412 ()
         if debug: 
             fix_end = time.time () 
 
