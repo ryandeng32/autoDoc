@@ -306,7 +306,7 @@ class AutoDoc (object):
                         line = line.replace(" --", ":")
                         starting_index = first_non_whitespace_index(line)
                         line = line[:starting_index] + ":param " + line [starting_index:]
-                    if contents[line_index][-2].isalnum() == False and starting_index == first_non_whitespace_index(contents[line_index + 1]):
+                    if contents[line_index][-2].isalnum() == False and starting_index >= first_non_whitespace_index(contents[line_index + 1]):
                         line = line[:-2] + "\n"
                     contents[line_index] = line
                     line_index += 1 
