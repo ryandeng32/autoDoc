@@ -282,7 +282,7 @@ class AutoDoc (object):
                 capitalize_first_word (contents, line_num-1)
             self.contents = contents 
 
-    def execute (self, debug=False): 
+    def execute (self, debug): 
         """Read from and apply fixes to file.
 
         :param debug: Print useful info when debug is True
@@ -332,11 +332,12 @@ class AutoDoc (object):
 
 # for testing autoDoc with a file specified through command line arguments  
 if __name__ == "__main__":
+    debug = False
+    if "-d" in sys.argv:
+        sys.argv.remove('-d') 
+        debug = True 
     if len (sys.argv) == 2 and os.path.isfile (sys.argv[-1]): 
         obj = AutoDoc (sys.argv[-1]) 
-        obj.execute () 
-    elif len(sys.argv) == 3 and sys.argv[2] == "-d":
-        obj = AutoDoc (sys.argv[1]) 
-        obj.execute (debug=True) 
+        obj.execute (debug=debug) 
     else: 
         print ("ERROR: A valid file name is required.")

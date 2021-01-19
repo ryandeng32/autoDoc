@@ -8,13 +8,13 @@ from auto_helper import print_errors
 
 debug = False
 path = os.getcwd()
-if len(sys.argv) == 2: 
-    path = sys.argv[-1]
-elif len(sys.argv) == 3 and sys.argv[2] == "-d":
-    path = sys.argv[1]
+if "-d" in sys.argv:
+    sys.argv.remove('-d') 
+    print('YEEEEE')
     debug = True 
     total_time_start = time.time ()
-
+if len(sys.argv) == 2: 
+    path = sys.argv[-1]
 process = subprocess.run (['pydocstyle', path], stdout=subprocess.PIPE)
 process
 errors = [error.strip () for error in process.stdout.decode ("utf-8").split ("\n")]
