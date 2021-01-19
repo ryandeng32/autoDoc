@@ -283,6 +283,11 @@ class AutoDoc (object):
             self.contents = contents 
 
     def fix_D412 (self): 
+        """Fixes D412: No blank lines allowed between a section header and its content
+        In the case that its section header is 'Parameters' which indicates a different style of docstring.
+        
+        This operation will change the line numbers in file. 
+        """ 
         contents = self.contents 
         error_lines_num = self.error_pairs["D412"] 
         if error_lines_num:
@@ -292,11 +297,14 @@ class AutoDoc (object):
                 quote_type = get_quote_type (contents[line_index])
                 while contents[line_index].strip () != "Parameters:": 
                     line_index += 1 
-                line_index += 1
+                contents[line_index] = ""
                 error_lines_num = manage_blank_lines (contents, line_index, log, error_lines_num) 
                 line = contents[line_index]
                 while line.strip () != "" and line.strip () != quote_type: 
-                    contents[line_index] = " " * 4 + line.replace (" --", ":")
+                    line = line.replace(" --", ":").replace("    ", "    :param ")
+                    if contents[line_index][-2].isalnum() == False:
+                        line = line[:-2] + "\n"
+                    contents[line_index] = line
                     line_index += 1 
                     line = contents[line_index] 
                 return error_lines_num
