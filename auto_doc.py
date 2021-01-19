@@ -300,9 +300,13 @@ class AutoDoc (object):
                 contents[line_index] = ""
                 error_lines_num = manage_blank_lines (contents, line_index, log, error_lines_num) 
                 line = contents[line_index]
+                starting_index = first_non_whitespace_index(line)
                 while line.strip () != "" and line.strip () != quote_type: 
-                    line = line.replace(" --", ":").replace("    ", "    :param ")
-                    if contents[line_index][-2].isalnum() == False:
+                    if (" --" in line):
+                        line = line.replace(" --", ":")
+                        starting_index = first_non_whitespace_index(line)
+                        line = line[:starting_index] + ":param " + line [starting_index:]
+                    if contents[line_index][-2].isalnum() == False and starting_index == first_non_whitespace_index(contents[line_index + 1]):
                         line = line[:-2] + "\n"
                     contents[line_index] = line
                     line_index += 1 
