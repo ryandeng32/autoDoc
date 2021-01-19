@@ -9,9 +9,13 @@ from collections import defaultdict
 from auto_doc import AutoDoc
 from auto_helper import print_errors
 
+# options for running pydocstyle
+options = '--add-ignore=D100,D101,D102,D103,D104,D105,D106,D107,D401,D402'
+convention = '--convention=pep257'
+
 # get error pairs (dict of dicts of list) 
 def generate_error_dict(path): 
-    process = subprocess.run (['pydocstyle', path], stdout=subprocess.PIPE)
+    process = subprocess.run (['pydocstyle', path, convention, options], stdout=subprocess.PIPE)
     process
     errors = [error.strip () for error in process.stdout.decode ("utf-8").split ("\n")]
     error_dict = defaultdict (dict) 
