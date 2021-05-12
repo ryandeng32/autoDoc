@@ -1,6 +1,9 @@
 # AutoDoc
 A tool that automatically changes existing documentations to comply to PEP257 and the Sphinx format.
 
+## Demo Gif
+![Demo Gif](https://github.com/ryandeng32/autoDoc/blob/main/assets/autoDoc.gif)
+
 ## Resources
 * We used [pydocstyle](https://pypi.org/project/pydocstyle/) to detect PEP257 violations.
 * Here is a reference to the [error codes](http://www.pydocstyle.org/en/2.1.1/error_codes.html).
